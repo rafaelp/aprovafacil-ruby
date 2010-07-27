@@ -4,7 +4,7 @@ Ruby Wrapper for AprovaFacil
 
 ## INSTALATION
 
-	gem install rafaelp-aprovafacil-ruby
+	gem install aprovafacil-ruby
 
 ## LICENSE
 
