@@ -1,0 +1,43 @@
+<ResultadoAPC>
+	<TransacaoAprovada>
+		False
+	</TransacaoAprovada>
+	<ResultadoSolicitacaoAprovacao>
+		Nao Autorizado - 32
+	</ResultadoSolicitacaoAprovacao>
+	<CodigoAutorizacao>
+
+	</CodigoAutorizacao>
+	<Transacao>
+		73397880137091
+	</Transacao>
+	<CartaoMascarado>
+		407302******0002
+	</CartaoMascarado>
+	<NumeroDocumento>
+
+	</NumeroDocumento>
+	<ComprovanteAdministradora>
+
+	</ComprovanteAdministradora>
+	<NacionalidadeEmissor>
+
+	</NacionalidadeEmissor>
+	<ResultadoAVS>
+
+	</ResultadoAVS>
+	<EnderecoAVS>
+		<Endereco>
+
+		</Endereco>
+		<Numero>
+
+		</Numero>
+		<Complemento>
+
+		</Complemento>
+		<Cep>
+
+		</Cep>
+	</EnderecoAVS>
+</ResultadoAPC>

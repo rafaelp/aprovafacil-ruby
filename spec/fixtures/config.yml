@@ -1,0 +1,4 @@
+test:
+  apc_url: http://teste.aprovafacil.com/cgi-bin/APFW/usuario/APC
+  cap_url: http://teste.aprovafacil.com/cgi-bin/APFW/usuario/CAP
+  can_url: http://teste.aprovafacil.com/cgi-bin/APFW/usuario/CAN

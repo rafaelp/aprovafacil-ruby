@@ -1,0 +1,10 @@
+test:
+  node1:
+    test: 1
+  node2:
+    test: 2
+
+development:
+  node3:
+    test: 3
+    test: 4

@@ -1,0 +1,17 @@
+<ResultadoAPC> 
+<TransacaoAprovada>TRUE</TransacaoAprovada>  
+<ResultadoSolicitacaoAprovacao>00 ­ APROVADA</ResultadoSolicitacaoAprovacao>  
+<CodigoAutorizacao>082030</CodigoAutorizacao>  
+<Transacao>73314072604262</Transacao>  
+<CartaoMascarado>407302******0002</CartaoMascarado>  
+<NumeroDocumento>12345</NumeroDocumento>  
+<ComprovanteAdministradora>RETORNO, DEPENDE DA TECNOLOGIA</ComprovanteAdministradora>  
+<NacionalidadeEmissor> </NacionalidadeEmissor>  
+<ResultadoAVS> </ResultadoAVS>  
+<EnderecoAVS>  
+<Endereco> </Endereco>  
+<Numero> </Numero>  
+<Complemento> </Complemento>  
+<Cep> </Cep>  
+</EnderecoAVS>  
+</ResultadoAPC> 
