@@ -307,7 +307,67 @@ describe "AprovafacilRuby" do
       ret = @af.can(@valid_can_params_by_Transacao)
       ret.should == {"ErroValidacao" => nil, "Node1" => "test"}
     end
+    
+  end
 
+  describe "approve" do
+    
+    it "should call APC"
+    it "should store response from APC"
+    it "should store Transacao"
+    it "should store error messages from response if not approved"
+    it "should return true if debit was approved"
+    it "should return false if debit was not approved"
+    
+  end
+  
+  describe "approved?" do
+    
+    it "should return true if last APC request was approved"
+    it "should return false if last APC request was not approved"
+    
+  end
+  
+  describe "confirm" do
+    
+    it "should call CAP with Transacao stored by aprove"
+    it "should store response from CAP"
+    it "should store Transacao"
+    it "should store error messages from response if not confirmed"
+    it "should return true if debit was confirmed"
+    it "should return false if debit was not confirmed"
+    
+  end
+  
+  describe "confirmed?" do
+    
+    it "should return true if last CAP request was confirmed"
+    it "should return false if last CAP request was not confirmed"
+    
+  end
+  
+  describe "cancel" do
+    
+    it "should call CAN with Transacao stored by confirm"
+    it "should store response from CAN"
+    it "should store Transacao"
+    it "should store error messages from response if not canceled"
+    it "should return true if debit was canceled"
+    it "should return false if debit was not canceled"
+    
+  end
+  
+  describe "canceled?" do
+    
+    it "should return true if last CAN request was canceled"
+    it "should return false if last CAN request was not canceled"
+    
+  end
+
+  describe "error?" do
+    
+    it "should return true if last request was not complete"
+    
   end
 
   describe "do_post" do
