@@ -1,9 +1,12 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe "AprovafacilRuby" do
+
+  before(:all) do
+    @config_file = File.expand_path(File.dirname(__FILE__) + '/fixtures/config.yml')
+  end
   
   before(:each) do
-    @config_file = File.expand_path(File.dirname(__FILE__) + '/fixtures/dummy-config.yml')
     @af = AprovaFacil.new(@config_file)
   end
   
@@ -56,6 +59,11 @@ describe "AprovafacilRuby" do
       }
     end
 
+    before(:each) do
+      @config_file = File.expand_path(File.dirname(__FILE__) + '/fixtures/dummy-config.yml')
+      @af = AprovaFacil.new(@config_file)
+    end
+
     it "should parse configuration from file" do
       file = mock()
       File.should_receive(:open).with(@config_file).and_return(file)
@@ -83,11 +91,6 @@ describe "AprovafacilRuby" do
   end
   
   describe "APC" do
-
-    before(:each) do
-      config_file = File.expand_path(File.dirname(__FILE__) + '/fixtures/config.yml')
-      @af = AprovaFacil.new(config_file)
-    end
 
     before(:all) do
       @valid_apc_params = {
@@ -191,19 +194,13 @@ describe "AprovafacilRuby" do
     end
     
     it "should return data structure of response" do
-      @af.should_receive(:do_post).once.and_return({"Node1" => "test"})
       ret = @af.apc(@valid_apc_params)
-      ret.should == {"ErroValidacao" => nil, "Node1" => "test"}
+      ret.should == {"TransacaoAprovada"=>"False", "EnderecoAVS"=>{"Complemento"=>{}, "Endereco"=>{}, "Cep"=>{}, "Numero"=>{}}, "NumeroDocumento"=>{}, "NacionalidadeEmissor"=>{}, "ErroValidacao"=>nil, "CodigoAutorizacao"=>{}, "ComprovanteAdministradora"=>{}, "ResultadoSolicitacaoAprovacao"=>"Nao Autorizado - 32", "Transacao"=>"73397880137091", "ResultadoAVS"=>{}, "CartaoMascarado"=>"407302******0002"}
     end
     
   end
 
   describe "CAP" do
-
-    before(:each) do
-      config_file = File.expand_path(File.dirname(__FILE__) + '/fixtures/config.yml')
-      @af = AprovaFacil.new(config_file)
-    end
 
     before(:all) do
       @valid_cap_params_by_NumeroDocumento = {
@@ -247,19 +244,13 @@ describe "AprovafacilRuby" do
     end
     
     it "should return data structure of response" do
-      @af.should_receive(:do_post).once.and_return({"Node1" => "test"})
       ret = @af.cap(@valid_cap_params_by_Transacao)
-      ret.should == {"ErroValidacao" => nil, "Node1" => "test"}
+      ret.should == {"ErroValidacao"=>nil, "ResultadoSolicitacaoConfirmacao"=>"Erro%20­%20Transa%E7%E3o%20a%20confirmar%20n%E3o%20encontrada%20ou \n%20jE1%20confirmada", "ComprovanteAdministradora"=>{}}
     end
 
   end
 
   describe "CAN" do
-
-    before(:each) do
-      config_file = File.expand_path(File.dirname(__FILE__) + '/fixtures/config.yml')
-      @af = AprovaFacil.new(config_file)
-    end
 
     before(:all) do
       @valid_can_params_by_NumeroDocumento = {
@@ -303,70 +294,239 @@ describe "AprovafacilRuby" do
     end
     
     it "should return data structure of response" do
-      @af.should_receive(:do_post).once.and_return({"Node1" => "test"})
       ret = @af.can(@valid_can_params_by_Transacao)
-      ret.should == {"ErroValidacao" => nil, "Node1" => "test"}
+      ret.should == {"ErroValidacao"=>nil, "ResultadoSolicitacaoCancelamento"=>"Erro%20­%20Transa%E7%E3o%20inv%E1lida", "NSUCancelamento"=>{}}
+    end
+    
+  end
+  
+  describe "apc_transaction" do
+    
+    it "should not be writable" do
+      lambda {
+        @af.apc_transaction = "999"
+      }.should raise_exception
     end
     
   end
 
-  describe "approve" do
+  describe "cap_transaction" do
     
-    it "should call APC"
-    it "should store response from APC"
-    it "should store Transacao"
-    it "should store error messages from response if not approved"
-    it "should return true if debit was approved"
-    it "should return false if debit was not approved"
-    
-  end
-  
-  describe "approved?" do
-    
-    it "should return true if last APC request was approved"
-    it "should return false if last APC request was not approved"
+    it "should not be writable" do
+      lambda {
+        @af.cap_transaction = "999"
+      }.should raise_exception
+    end
     
   end
   
-  describe "confirm" do
+  describe "can_transaction" do
     
-    it "should call CAP with Transacao stored by aprove"
-    it "should store response from CAP"
-    it "should store Transacao"
-    it "should store error messages from response if not confirmed"
-    it "should return true if debit was confirmed"
-    it "should return false if debit was not confirmed"
-    
-  end
-  
-  describe "confirmed?" do
-    
-    it "should return true if last CAP request was confirmed"
-    it "should return false if last CAP request was not confirmed"
+    it "should not be writable" do
+      lambda {
+        @af.can_transaction = "999"
+      }.should raise_exception
+    end
     
   end
   
-  describe "cancel" do
+  describe "error_message" do
     
-    it "should call CAN with Transacao stored by confirm"
-    it "should store response from CAN"
-    it "should store Transacao"
-    it "should store error messages from response if not canceled"
-    it "should return true if debit was canceled"
-    it "should return false if debit was not canceled"
+    it "should not be writable" do
+      lambda {
+        @af.error_message = "Error Message"
+      }.should raise_exception
+    end
     
   end
   
-  describe "canceled?" do
-    
-    it "should return true if last CAN request was canceled"
-    it "should return false if last CAN request was not canceled"
-    
-  end
+  
+  describe "End User methods" do
 
-  describe "error?" do
+    before(:all) do
+      @valid_params = {
+        :ValorDocumento => 1.99,
+        :QuantidadeParcelas => 1,
+        :NumeroCartao => '4073020000000002',
+        :MesValidade => 12,
+        :AnoValidade => 14,
+        :CodigoSeguranca => 999,
+        :EnderecoIPComprador => '200.255.108.6',
+      }
+      @approved_apc_response = {"TransacaoAprovada" => "True", "Transacao" => "9999", "ResultadoSolicitacaoAprovacao" => "00 ­ APROVADA"}
+      @disapproved_apc_response = {"TransacaoAprovada" => "False", "Transacao" => "8888", "ResultadoSolicitacaoAprovacao" => "Nao Autorizado - 32"}
+
+      @success_cap_response = {"ResultadoSolicitacaoConfirmacao" => "Confirmado%2073263500055432"}
+      @error_cap_response = {"ResultadoSolicitacaoConfirmacao" => "Erro%20­%20Transa%E7%E3o%20a%20confirmar%20n%E3o%20encontrada%20ou %20jE1%20confirmada"}
+
+    end
+
+    describe "approve" do    
     
-    it "should return true if last request was not complete"
+      it "should call APC once" do
+        @af.should_receive(:apc).with(@valid_params).once.and_return(@approved_apc_response)
+        @af.approve(@valid_params)
+      end
+    
+      it "should store response from APC" do
+        @af.should_receive(:apc).with(@valid_params).and_return(@approved_apc_response)
+        @af.approve(@valid_params)
+        @af.instance_variable_get(:@apc_response).should == @approved_apc_response
+      end
+    
+      it "should store transaction if approved" do
+        @af.should_receive(:apc).with(@valid_params).and_return(@approved_apc_response)
+        @af.approve(@valid_params)
+        @af.apc_transaction.should == @approved_apc_response["Transacao"]
+      end
+
+      it "should store transaction if disapproved" do
+        @af.should_receive(:apc).with(@valid_params).and_return(@disapproved_apc_response)
+        @af.approve(@valid_params)
+        @af.apc_transaction.should == @disapproved_apc_response["Transacao"]
+      end
+    
+      it "should store error messages from response if not approved" do
+        @af.should_receive(:apc).with(@valid_params).and_return(@disapproved_apc_response)
+        @af.approve(@valid_params)
+        @af.error_message.should == @disapproved_apc_response["ResultadoSolicitacaoAprovacao"]
+      end
+    
+      it "should return true if debit was approved" do
+        @af.should_receive(:apc).with(@valid_params).and_return(@approved_apc_response)
+        @af.approve(@valid_params).should be_true
+      end      
+    
+      it "should return false if debit was not approved" do
+        @af.should_receive(:apc).with(@valid_params).and_return(@disapproved_apc_response)
+        @af.approve(@valid_params).should be_false
+      end
+    
+    end
+  
+    describe "approved?" do
+        
+      it "should return true if last APC request was approved" do
+        @af.instance_variable_set(:@apc_response, @approved_apc_response)
+        @af.approved?.should be_true
+      end
+    
+      it "should return false if last APC request was not approved" do
+        @af.instance_variable_set(:@apc_response, @disapproved_apc_response)
+        @af.approved?.should be_false
+      end
+    
+    end
+    
+    describe "is_there_approved_transaction?" do
+      
+      it "should return false when there is no transaction" do
+        @af.is_there_approved_transaction?.should be_false
+      end
+      
+      it "should return false when there is a transaction but was not approved" do
+        @af.should_receive(:apc).with(@valid_params).once.and_return(@disapproved_apc_response)
+        @af.approve(@valid_params)
+        @af.is_there_approved_transaction?.should be_false
+      end
+      
+      it "should return true when there is a transaction and was approved" do
+        @af.should_receive(:apc).with(@valid_params).once.and_return(@approved_apc_response)
+        @af.approve(@valid_params)
+        @af.is_there_approved_transaction?.should be_true
+      end
+      
+    end
+  
+    describe "confirm" do
+      
+      before(:each) do        
+        @af.stub!(:apc).and_return(@approved_apc_response)
+      end
+    
+      it "should raise exception if Transacao is not passed and apc was not called before" do
+        lambda {
+          @af.confirm
+        }.should raise_exception("There is no approved transaction to confirm.")
+      end
+    
+      it "should call CAP once" do
+        @af.approve(@valid_params)
+        @af.should_receive(:cap).with({"Transacao" => "7777"}).once.and_return(@success_cap_response)
+        @af.confirm({"Transacao" => "7777"})
+      end
+
+      it "should call CAP with Transacao stored by approve when Transacao is not passed" do
+        @af.approve(@valid_params)
+        @af.should_receive(:cap).with({"Transacao" => @approved_apc_response["Transacao"]}).once.and_return(@success_cap_response)
+        @af.confirm
+      end
+    
+      it "should store response from CAP" do
+        @af.approve(@valid_params)
+        @af.should_receive(:cap).once.and_return(@success_cap_response)
+        @af.confirm
+        @af.instance_variable_get(:@cap_response).should == @success_cap_response
+      end
+      
+      it "should store error messages from response if not confirmed" do
+        @af.approve(@valid_params)
+        @af.should_receive(:cap).once.and_return(@error_cap_response)
+        @af.confirm
+        @af.error_message.should == @error_cap_response["ResultadoSolicitacaoConfirmacao"]
+      end
+      
+      it "should return true if debit was confirmed" do
+        @af.approve(@valid_params)
+        @af.should_receive(:cap).once.and_return(@success_cap_response)
+        @af.confirm.should be_true
+      end
+      
+      it "should return false if debit was not confirmed" do
+        @af.approve(@valid_params)
+        @af.should_receive(:cap).once.and_return(@error_cap_response)
+        @af.confirm.should be_false
+      end
+    
+    end
+  
+    describe "confirmed?" do
+    
+      it "should return true if last CAP request was confirmed" do
+        @af.instance_variable_set(:@cap_response, @success_cap_response)
+        @af.confirmed?.should be_true
+      end
+      
+      it "should return false if last CAP request was not confirmed" do
+        @af.instance_variable_set(:@cap_response, @error_cap_response)
+        @af.confirmed?.should be_false
+      end
+    
+    end
+  
+    describe "cancel" do
+    
+      it "should call CAN with Transacao stored by confirm"
+      it "should store response from CAN"
+      it "should store Transacao"
+      it "should store error messages from response if not canceled"
+      it "should return true if debit was canceled"
+      it "should return false if debit was not canceled"
+    
+    end
+  
+    describe "canceled?" do
+    
+      it "should return true if last CAN request was canceled"
+      it "should return false if last CAN request was not canceled"
+    
+    end
+
+    describe "error?" do
+    
+      it "should return true if last request was not complete"
+    
+    end
     
   end
 

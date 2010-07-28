@@ -6,6 +6,8 @@ require 'xmlsimple'
 require 'hash_strip_values'
 
 class AprovaFacil
+  
+  attr_reader :apc_transaction, :cap_transaction, :can_transaction, :error_message
 	
 	def initialize(config_file, environment = 'test')
 	  raise(ArgumentError, "config_file must be a valid file path") if config_file.nil? or config_file.empty?
@@ -70,6 +72,33 @@ class AprovaFacil
     ret.strip_values! unless ret.nil?
   end
 
+  def approve(params)
+    @apc_response = apc(params)
+    @apc_transaction = @apc_response["Transacao"]
+    @error_message = @apc_response["ResultadoSolicitacaoAprovacao"] unless approved?
+    return approved?
+  end
+  
+  def confirm(params = {})
+    params["Transacao"] ||= @apc_transaction if is_there_approved_transaction?
+    raise "There is no approved transaction to confirm." if params["Transacao"].nil?
+    @cap_response = cap(params)
+    @error_message = @cap_response["ResultadoSolicitacaoConfirmacao"] unless confirmed?
+    return confirmed?
+  end
+  
+  def confirmed?
+    @cap_response["ResultadoSolicitacaoConfirmacao"].split("%20")[0] == "Confirmado"
+  end
+  
+  def is_there_approved_transaction?
+    @apc_transaction and approved?
+  end
+  
+  def approved?
+    @apc_response["TransacaoAprovada"] == "True"
+  end
+    
 	protected
 	
   def parse_config
