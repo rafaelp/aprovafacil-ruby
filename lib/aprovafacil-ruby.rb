@@ -7,8 +7,8 @@ require 'hash_strip_values'
 
 class AprovaFacil
   
-  attr_reader :apc_transaction, :cap_transaction, :can_transaction, :error_message
-	
+  attr_reader :transaction, :error_message
+
 	def initialize(config_file, environment = 'test')
 	  raise(ArgumentError, "config_file must be a valid file path") if config_file.nil? or config_file.empty?
     raise(Errno::ENOENT, config_file) unless File.exists? config_file
@@ -74,33 +74,53 @@ class AprovaFacil
 
   def approve(params)
     @apc_response = apc(params)
-    @apc_transaction = @apc_response["Transacao"]
-    @error_message = @apc_response["ResultadoSolicitacaoAprovacao"] unless approved?
+    @transaction = @apc_response["Transacao"]
+    @error_message = approved? ? nil : @apc_response["ResultadoSolicitacaoAprovacao"]
     return approved?
   end
   
-  def confirm(params = {})
-    params["Transacao"] ||= @apc_transaction if is_there_approved_transaction?
-    raise "There is no approved transaction to confirm." if params["Transacao"].nil?
+  def confirm(params)
     @cap_response = cap(params)
-    @error_message = @cap_response["ResultadoSolicitacaoConfirmacao"] unless confirmed?
+    @error_message = confirmed? ? nil : @cap_response["ResultadoSolicitacaoConfirmacao"]
     return confirmed?
   end
   
-  def confirmed?
-    @cap_response["ResultadoSolicitacaoConfirmacao"].split("%20")[0] == "Confirmado"
+  def cancel(params)
+    @can_response = can(params)
+    @error_message = (cancelled? or to_cancel?) ? nil : @can_response["ResultadoSolicitacaoCancelamento"]
+    return(cancelled? or to_cancel?)
   end
-  
-  def is_there_approved_transaction?
-    @apc_transaction and approved?
-  end
-  
+
   def approved?
+    raise "Call this method after approve" if @apc_response.nil?
     @apc_response["TransacaoAprovada"] == "True"
   end
-    
+
+  def confirmed?
+    raise "Call this method after confirm" if @cap_response.nil?
+    @cap_response["ResultadoSolicitacaoConfirmacao"].split("%20")[0] == "Confirmado"
+  end
+
+  def cancelled?
+    raise "Call this method after cancel" if @can_response.nil?
+    @can_response["ResultadoSolicitacaoCancelamento"].split("%20")[0] == "Cancelado"
+  end
+
+  def to_cancel?
+    raise "Call this method after cancel" if @can_response.nil?
+    (@can_response["ResultadoSolicitacaoCancelamento"].split("%20")[0] == "Cancelamento" and
+    @can_response["ResultadoSolicitacaoCancelamento"].split("%20")[1] == "marcado" and
+    @can_response["ResultadoSolicitacaoCancelamento"].split("%20")[2] == "para" and
+    @can_response["ResultadoSolicitacaoCancelamento"].split("%20")[3] == "envio")
+  end
+  
+  def error?
+    !@error_message.nil?
+  end
+      
 	protected
-	
+
+
   def parse_config
     YAML::load(File.open(@config_file))
   end

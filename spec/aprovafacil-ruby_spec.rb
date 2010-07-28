@@ -300,31 +300,11 @@ describe "AprovafacilRuby" do
     
   end
   
-  describe "apc_transaction" do
+  describe "transaction" do
     
     it "should not be writable" do
       lambda {
-        @af.apc_transaction = "999"
-      }.should raise_exception
-    end
-    
-  end
-
-  describe "cap_transaction" do
-    
-    it "should not be writable" do
-      lambda {
-        @af.cap_transaction = "999"
-      }.should raise_exception
-    end
-    
-  end
-  
-  describe "can_transaction" do
-    
-    it "should not be writable" do
-      lambda {
-        @af.can_transaction = "999"
+        @af.transaction = "999"
       }.should raise_exception
     end
     
@@ -359,6 +339,10 @@ describe "AprovafacilRuby" do
       @success_cap_response = {"ResultadoSolicitacaoConfirmacao" => "Confirmado%2073263500055432"}
       @error_cap_response = {"ResultadoSolicitacaoConfirmacao" => "Erro%20­%20Transa%E7%E3o%20a%20confirmar%20n%E3o%20encontrada%20ou %20jE1%20confirmada"}
 
+      @cancelled_can_response = {"ResultadoSolicitacaoCancelamento" => "Cancelado%2073263500055432"}
+      @to_cancel_can_response = {"ResultadoSolicitacaoCancelamento" => "Cancelamento%20marcado%20para%20envio%2073263500055432 "}
+      @error_can_response = {"ResultadoSolicitacaoCancelamento" => "Erro%20­%20Transa%E7%E3o%20inv%E1lida"}
+
     end
 
     describe "approve" do    
@@ -377,13 +361,20 @@ describe "AprovafacilRuby" do
       it "should store transaction if approved" do
         @af.should_receive(:apc).with(@valid_params).and_return(@approved_apc_response)
         @af.approve(@valid_params)
-        @af.apc_transaction.should == @approved_apc_response["Transacao"]
+        @af.transaction.should == @approved_apc_response["Transacao"]
       end
 
       it "should store transaction if disapproved" do
         @af.should_receive(:apc).with(@valid_params).and_return(@disapproved_apc_response)
         @af.approve(@valid_params)
-        @af.apc_transaction.should == @disapproved_apc_response["Transacao"]
+        @af.transaction.should == @disapproved_apc_response["Transacao"]
+      end
+      
+      it "should clear error message if approved" do
+        @af.instance_variable_set(:@error_message, "Error Message")
+        @af.should_receive(:apc).once.and_return(@approved_apc_response)
+        @af.approve(@valid_params)
+        @af.error_message.should be_nil
       end
     
       it "should store error messages from response if not approved" do
@@ -392,20 +383,27 @@ describe "AprovafacilRuby" do
         @af.error_message.should == @disapproved_apc_response["ResultadoSolicitacaoAprovacao"]
       end
     
-      it "should return true if debit was approved" do
+      it "should return true if transaction was approved" do
         @af.should_receive(:apc).with(@valid_params).and_return(@approved_apc_response)
         @af.approve(@valid_params).should be_true
       end      
     
-      it "should return false if debit was not approved" do
+      it "should return false if transaction was not approved" do
         @af.should_receive(:apc).with(@valid_params).and_return(@disapproved_apc_response)
         @af.approve(@valid_params).should be_false
       end
     
     end
   
+
     describe "approved?" do
-        
+
+      it "should raise exception if no APC response" do
+        lambda {
+          @af.approved?
+        }.should raise_exception("Call this method after approve")
+      end
+
       it "should return true if last APC request was approved" do
         @af.instance_variable_set(:@apc_response, @approved_apc_response)
         @af.approved?.should be_true
@@ -417,37 +415,11 @@ describe "AprovafacilRuby" do
       end
     
     end
-    
-    describe "is_there_approved_transaction?" do
-      
-      it "should return false when there is no transaction" do
-        @af.is_there_approved_transaction?.should be_false
-      end
-      
-      it "should return false when there is a transaction but was not approved" do
-        @af.should_receive(:apc).with(@valid_params).once.and_return(@disapproved_apc_response)
-        @af.approve(@valid_params)
-        @af.is_there_approved_transaction?.should be_false
-      end
-      
-      it "should return true when there is a transaction and was approved" do
-        @af.should_receive(:apc).with(@valid_params).once.and_return(@approved_apc_response)
-        @af.approve(@valid_params)
-        @af.is_there_approved_transaction?.should be_true
-      end
-      
-    end
   
     describe "confirm" do
       
-      before(:each) do        
+      before(:each) do
         @af.stub!(:apc).and_return(@approved_apc_response)
-      end
-    
-      it "should raise exception if Transacao is not passed and apc was not called before" do
-        lambda {
-          @af.confirm
-        }.should raise_exception("There is no approved transaction to confirm.")
       end
     
       it "should call CAP once" do
@@ -456,42 +428,49 @@ describe "AprovafacilRuby" do
         @af.confirm({"Transacao" => "7777"})
       end
 
-      it "should call CAP with Transacao stored by approve when Transacao is not passed" do
-        @af.approve(@valid_params)
-        @af.should_receive(:cap).with({"Transacao" => @approved_apc_response["Transacao"]}).once.and_return(@success_cap_response)
-        @af.confirm
-      end
-    
       it "should store response from CAP" do
         @af.approve(@valid_params)
         @af.should_receive(:cap).once.and_return(@success_cap_response)
-        @af.confirm
+        @af.confirm(@valid_params)
         @af.instance_variable_get(:@cap_response).should == @success_cap_response
+      end
+      
+      it "should clear error message if confirmed" do
+        @af.instance_variable_set(:@error_message, "Error Message")
+        @af.should_receive(:cap).once.and_return(@success_cap_response)
+        @af.confirm(@valid_params)
+        @af.error_message.should be_nil
       end
       
       it "should store error messages from response if not confirmed" do
         @af.approve(@valid_params)
         @af.should_receive(:cap).once.and_return(@error_cap_response)
-        @af.confirm
+        @af.confirm(@valid_params)
         @af.error_message.should == @error_cap_response["ResultadoSolicitacaoConfirmacao"]
       end
       
-      it "should return true if debit was confirmed" do
+      it "should return true if transaction was confirmed" do
         @af.approve(@valid_params)
         @af.should_receive(:cap).once.and_return(@success_cap_response)
-        @af.confirm.should be_true
+        @af.confirm(@valid_params).should be_true
       end
       
-      it "should return false if debit was not confirmed" do
+      it "should return false if transaction was not confirmed" do
         @af.approve(@valid_params)
         @af.should_receive(:cap).once.and_return(@error_cap_response)
-        @af.confirm.should be_false
+        @af.confirm(@valid_params).should be_false
       end
     
     end
   
     describe "confirmed?" do
-    
+
+      it "should raise exception if no CAP response" do
+        lambda {
+          @af.confirmed?
+        }.should raise_exception("Call this method after confirm")
+      end
+      
       it "should return true if last CAP request was confirmed" do
         @af.instance_variable_set(:@cap_response, @success_cap_response)
         @af.confirmed?.should be_true
@@ -505,26 +484,120 @@ describe "AprovafacilRuby" do
     end
   
     describe "cancel" do
-    
-      it "should call CAN with Transacao stored by confirm"
-      it "should store response from CAN"
-      it "should store Transacao"
-      it "should store error messages from response if not canceled"
-      it "should return true if debit was canceled"
-      it "should return false if debit was not canceled"
+
+      before(:each) do
+        @af.stub!(:cap).and_return(@success_cap_response)
+      end
+
+      it "should call CAN once" do
+        @af.should_receive(:can).with({"Transacao" => "7777"}).once.and_return(@cancelled_can_response)
+        @af.cancel({"Transacao" => "7777"})
+      end
+
+      it "should store response from CAP" do
+        @af.should_receive(:can).once.and_return(@cancelled_can_response)
+        @af.cancel(@valid_params)
+        @af.instance_variable_get(:@can_response).should == @cancelled_can_response
+      end
+      
+      it "should clear error message if cancelled" do
+        @af.instance_variable_set(:@error_message, "Error Message")
+        @af.should_receive(:can).once.and_return(@cancelled_can_response)
+        @af.cancel(@valid_params)
+        @af.error_message.should be_nil
+      end
+
+      it "should clear error message if marked to cancel" do
+        @af.instance_variable_set(:@error_message, "Error Message")
+        @af.should_receive(:can).once.and_return(@to_cancel_can_response)
+        @af.cancel(@valid_params)
+        @af.error_message.should be_nil
+      end
+      
+      it "should store error message from response if not cancelled" do
+        @af.should_receive(:can).once.and_return(@error_can_response)
+        @af.cancel(@valid_params)
+        @af.error_message.should == @error_can_response["ResultadoSolicitacaoCancelamento"]
+      end
+      
+      it "should return true if transaction was cancelled" do
+        @af.should_receive(:can).once.and_return(@cancelled_can_response)
+        @af.cancel(@valid_params).should be_true
+      end
+
+      it "should return true if transaction was marked to cancel" do
+        @af.should_receive(:can).once.and_return(@to_cancel_can_response)
+        @af.cancel(@valid_params).should be_true
+      end
+      
+      it "should return false if transaction was not cancelled" do
+        @af.should_receive(:can).once.and_return(@error_can_response)
+        @af.cancel(@valid_params).should be_false
+      end
     
     end
   
-    describe "canceled?" do
+    describe "cancelled?" do
     
-      it "should return true if last CAN request was canceled"
-      it "should return false if last CAN request was not canceled"
+      it "should raise exception if no CAN response" do
+        lambda {
+          @af.cancelled?
+        }.should raise_exception("Call this method after cancel")
+      end
+      
+      it "should return true if last CAN request was cancelled" do
+        @af.instance_variable_set(:@can_response, @cancelled_can_response)
+        @af.cancelled?.should be_true
+      end
+      
+      it "should return false if last CAN request was not cancelled" do
+        @af.instance_variable_set(:@can_response, @error_can_response)
+        @af.cancelled?.should be_false
+      end    
+
+      it "should return false if last CAN request was marked to cancel" do
+        @af.instance_variable_set(:@can_response, @to_cancel_can_response)
+        @af.cancelled?.should be_false
+      end    
+
+    end
+
+    describe "to_cancel?" do
     
+      it "should raise exception if no CAN response" do
+        lambda {
+          @af.to_cancel?
+        }.should raise_exception("Call this method after cancel")
+      end
+      
+      it "should return true if last CAN request was cancelled" do
+        @af.instance_variable_set(:@can_response, @cancelled_can_response)
+        @af.to_cancel?.should be_false
+      end
+      
+      it "should return false if last CAN request was not cancelled" do
+        @af.instance_variable_set(:@can_response, @error_can_response)
+        @af.to_cancel?.should be_false
+      end    
+
+      it "should return false if last CAN request was marked to cancel" do
+        @af.instance_variable_set(:@can_response, @to_cancel_can_response)
+        @af.to_cancel?.should be_true
+      end    
+
     end
 
     describe "error?" do
     
-      it "should return true if last request was not complete"
+      it "should return true if last request was not complete" do
+        @af.instance_variable_set(:@error_message, "Error Message")
+        @af.error?.should be_true
+      end
+
+      it "should return false if last request was complete" do
+        @af.instance_variable_set(:@error_message, nil)
+        @af.error?.should be_false
+      end
     
     end
     
