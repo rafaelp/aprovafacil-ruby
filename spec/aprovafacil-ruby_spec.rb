@@ -611,19 +611,10 @@ describe "AprovafacilRuby" do
       @dirty_data_structure = f.read
       f.close
       
-      @http_mock = mock('Net::HTTPResponse')
-      @http_mock.stub(:code => '200', :message => "OK", :content_type => "text/html", :body => @dirty_data_structure)
-      Net::HTTP.stub!(:post_form).and_return(@http_mock)
-
+      FakeWeb.register_uri(:post, "http://teste.aprovafacil.com/cgi-bin/APFW/usuario/APC", :body => @dirty_data_structure, :status => ["200", "OK"])
+      
       @url = "http://teste.aprovafacil.com/cgi-bin/APFW/usuario/APC"
       @params = {:q => 'just testing'}
-    end
-    
-    it "should make a request on received url with received params" do
-      parsed_uri = mock()
-      URI.should_receive(:parse).with(@url).once.and_return(parsed_uri)       
-      Net::HTTP.should_receive(:post_form).with(parsed_uri, @params).once.and_return(@http_mock)
-      @af.do_post(@url,@params)
     end
     
     it "should parse response with XmlSimple" do

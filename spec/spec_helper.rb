@@ -1,13 +1,16 @@
-$LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+$LOAD_PATH.unshift(File.dirname(__FILE__))
+require 'rspec'
+require 'rspec/mocks'
 require 'aprovafacil-ruby'
-require 'spec'
-require 'spec/autorun'
-require 'rubygems'
-require 'fakeweb'
 
-Spec::Runner.configure do |config|
+require 'fakeweb'
+FakeWeb.allow_net_connect = false
+
+# Requires supporting files with custom matchers and macros, etc,
+# in ./support/ and its subdirectories.
+Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
+
+RSpec.configure do |config|
   
 end
-
-FakeWeb.allow_net_connect = false
