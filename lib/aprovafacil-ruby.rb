@@ -26,17 +26,20 @@ class AprovaFacil
     @params = params
     validates_presence_of :ValorDocumento
     validates_presence_of :QuantidadeParcelas
-    validates_presence_of :NumeroCartao
-    validates_presence_of :MesValidade
-    validates_presence_of :AnoValidade
-    validates_presence_of :CodigoSeguranca
-    validates_presence_of :EnderecoIPComprador
     validates_length_of :NumeroDocumento, :maximum => 50
-    validates_length_of :NomePortadorCartao, :maximum => 50
-    validates_length_of :NumeroCartao, :maximum => 19
     validates_numericality_of :ValorDocumento
     validates_numericality_of :QuantidadeParcelas, :only_integer => true
-    validates_inclusion_of :Bandeira, :in => %w( VISA MASTERCARD DINERS AMEX HIPERCARD JCB SOROCRED AURA )
+
+    unless params[:TransacaoAnterior]
+      validates_presence_of :NumeroCartao
+      validates_presence_of :MesValidade
+      validates_presence_of :AnoValidade
+      validates_presence_of :CodigoSeguranca
+      validates_presence_of :EnderecoIPComprador
+      validates_length_of :NomePortadorCartao, :maximum => 50
+      validates_length_of :NumeroCartao, :maximum => 19
+      validates_inclusion_of :Bandeira, :in => %w( VISA MASTERCARD DINERS AMEX HIPERCARD JCB SOROCRED AURA )
+    end
     return {"ErroValidacao" => @errors} unless @errors.empty?
     
     raise "You should set apc_url variable in configuration file with correct APC URL" if config["apc_url"].nil?

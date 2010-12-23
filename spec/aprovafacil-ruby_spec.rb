@@ -110,92 +110,187 @@ describe "AprovafacilRuby" do
       
       FakeWeb.register_uri(:post, "http://teste.aprovafacil.com/cgi-bin/APFW/usuario/APC", :body => @resultado_apc)
     end
-  
-    it "should validates presence of ValorDocumento" do
-      ret = @af.apc
-      ret["ErroValidacao"].should include({:field => :ValorDocumento, :message => :blank})
-    end
     
-    it "should validates presence of QuantidadeParcelas" do
-      ret = @af.apc
-      ret["ErroValidacao"].should include({:field => :QuantidadeParcelas, :message => :blank})
-    end
-
-    it "should validates presence of NumeroCartao" do
-      ret = @af.apc
-      ret["ErroValidacao"].should include({:field => :NumeroCartao, :message => :blank})
-    end
-
-    it "should validates presence of MesValidade" do
-      ret = @af.apc
-      ret["ErroValidacao"].should include({:field => :MesValidade, :message => :blank})
-    end
+    context "TransacaoAnterior is present" do
+      
+      it "should validates presence of ValorDocumento" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056'})
+        ret["ErroValidacao"].should include({:field => :ValorDocumento, :message => :blank})
+      end
     
-    it "should validates presence of AnoValidade" do
-      ret = @af.apc
-      ret["ErroValidacao"].should include({:field => :AnoValidade, :message => :blank})
-    end
+      it "should validates presence of QuantidadeParcelas" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056'})
+        ret["ErroValidacao"].should include({:field => :QuantidadeParcelas, :message => :blank})
+      end
 
-    it "should validates presence of CodigoSeguranca" do
-      ret = @af.apc
-      ret["ErroValidacao"].should include({:field => :CodigoSeguranca, :message => :blank})
-    end
+      it "should not validates presence of NumeroCartao" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056'})
+        ret["ErroValidacao"].should_not include({:field => :NumeroCartao, :message => :blank})
+      end
 
-    it "should validates presence of EnderecoIPComprador" do
-      ret = @af.apc
-      ret["ErroValidacao"].should include({:field => :EnderecoIPComprador, :message => :blank})
-    end
+      it "should not validates presence of MesValidade" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056'})
+        ret["ErroValidacao"].should_not include({:field => :MesValidade, :message => :blank})
+      end
+    
+      it "should not validates presence of AnoValidade" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056'})
+        ret["ErroValidacao"].should_not include({:field => :AnoValidade, :message => :blank})
+      end
 
-    it "should validates length of NumeroDocumento" do
-      ret = @af.apc({:NumeroDocumento => 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeef'})
-      ret["ErroValidacao"].should include({:field => :NumeroDocumento, :message => :too_long})
-    end
+      it "should not validates presence of CodigoSeguranca" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056'})
+        ret["ErroValidacao"].should_not include({:field => :CodigoSeguranca, :message => :blank})
+      end
 
-    it "should validates length of NomePortadorCartao" do
-      ret = @af.apc({:NomePortadorCartao => 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeef'})
-      ret["ErroValidacao"].should include({:field => :NomePortadorCartao, :message => :too_long})
-    end
+      it "should not validates presence of EnderecoIPComprador" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056'})
+        ret["ErroValidacao"].should_not include({:field => :EnderecoIPComprador, :message => :blank})
+      end
 
-    it "should validates length of NumeroCartao" do
-      ret = @af.apc({:NumeroCartao => 'aaaaaaaaaabbbbbbbbbb'})
-      ret["ErroValidacao"].should include({:field => :NumeroCartao, :message => :too_long})
-    end
+      it "should validates length of NumeroDocumento" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056', :NumeroDocumento => 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeef'})
+        ret["ErroValidacao"].should include({:field => :NumeroDocumento, :message => :too_long})
+      end
 
-    it "should validates numericality of ValorDocumento" do
-      ret = @af.apc({:ValorDocumento => 'texto'})
-      ret["ErroValidacao"].should include({:field => :ValorDocumento, :message => :not_a_number})
-    end
+      it "should not validates length of NomePortadorCartao" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056', :NomePortadorCartao => 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeef'})
+        ret["ErroValidacao"].should_not include({:field => :NomePortadorCartao, :message => :too_long})
+      end
+
+      it "should not validates length of NumeroCartao" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056', :NumeroCartao => 'aaaaaaaaaabbbbbbbbbb'})
+        ret["ErroValidacao"].should_not include({:field => :NumeroCartao, :message => :too_long})
+      end
+
+      it "should validates numericality of ValorDocumento" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056', :ValorDocumento => 'texto'})
+        ret["ErroValidacao"].should include({:field => :ValorDocumento, :message => :not_a_number})
+      end
   
-    it "should validates numericality of QuantidadeParcelas" do
-      ret = @af.apc({:QuantidadeParcelas => 'texto'})
-      ret["ErroValidacao"].should include({:field => :QuantidadeParcelas, :message => :not_a_number})
-    end
+      it "should validates numericality of QuantidadeParcelas" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056', :QuantidadeParcelas => 'texto'})
+        ret["ErroValidacao"].should include({:field => :QuantidadeParcelas, :message => :not_a_number})
+      end
 
-    it "should validates numericality of QuantidadeParcelas with only integer" do
-      ret = @af.apc({:QuantidadeParcelas => 1.1})
-      ret["ErroValidacao"].should include({:field => :QuantidadeParcelas, :message => :not_a_number})
-    end
+      it "should validates numericality of QuantidadeParcelas with only integer" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056', :QuantidadeParcelas => 1.1})
+        ret["ErroValidacao"].should include({:field => :QuantidadeParcelas, :message => :not_a_number})
+      end
 
-    it "should validates inclusion of Bandeira" do
-      ret = @af.apc({:Bandeira => 'bandeirainvalida'})
-      ret["ErroValidacao"].should include({:field => :Bandeira, :message => :inclusion})
-    end
+      it "should not validates inclusion of Bandeira" do
+        ret = @af.apc({:TransacaoAnterior => '73412882291056', :Bandeira => 'bandeirainvalida'})
+        ret["ErroValidacao"].should_not include({:field => :Bandeira, :message => :inclusion})
+      end
 
-    it "should raise exception if config[:apc_url] not found" do
-      lambda {
-        @af.instance_variable_set(:@config, {:apc_url => nil})
+      it "should raise exception if config[:apc_url] not found" do
+        lambda {
+          @af.instance_variable_set(:@config, {:apc_url => nil})
+          @af.apc(@valid_apc_params)
+        }.should raise_exception("You should set apc_url variable in configuration file with correct APC URL")
+      end
+
+      it "should make a post request to AprovaFacil" do
+        @af.should_receive(:do_post).with("http://teste.aprovafacil.com/cgi-bin/APFW/usuario/APC", @valid_apc_params).once.and_return({})
         @af.apc(@valid_apc_params)
-      }.should raise_exception("You should set apc_url variable in configuration file with correct APC URL")
-    end
-
-    it "should make a post request to AprovaFacil" do
-      @af.should_receive(:do_post).with("http://teste.aprovafacil.com/cgi-bin/APFW/usuario/APC", @valid_apc_params).once.and_return({})
-      @af.apc(@valid_apc_params)
+      end
+    
+      it "should return data structure of response" do
+        ret = @af.apc(@valid_apc_params)
+        ret.should == {"TransacaoAprovada"=>"False", "EnderecoAVS"=>{"Complemento"=>{}, "Endereco"=>{}, "Cep"=>{}, "Numero"=>{}}, "NumeroDocumento"=>{}, "NacionalidadeEmissor"=>{}, "ErroValidacao"=>nil, "CodigoAutorizacao"=>{}, "ComprovanteAdministradora"=>{}, "ResultadoSolicitacaoAprovacao"=>"Nao Autorizado - 32", "Transacao"=>"73397880137091", "ResultadoAVS"=>{}, "CartaoMascarado"=>"407302******0002"}
+      end
+      
     end
     
-    it "should return data structure of response" do
-      ret = @af.apc(@valid_apc_params)
-      ret.should == {"TransacaoAprovada"=>"False", "EnderecoAVS"=>{"Complemento"=>{}, "Endereco"=>{}, "Cep"=>{}, "Numero"=>{}}, "NumeroDocumento"=>{}, "NacionalidadeEmissor"=>{}, "ErroValidacao"=>nil, "CodigoAutorizacao"=>{}, "ComprovanteAdministradora"=>{}, "ResultadoSolicitacaoAprovacao"=>"Nao Autorizado - 32", "Transacao"=>"73397880137091", "ResultadoAVS"=>{}, "CartaoMascarado"=>"407302******0002"}
+    context "TransacaoAnterior is not present" do
+  
+      it "should validates presence of ValorDocumento" do
+        ret = @af.apc
+        ret["ErroValidacao"].should include({:field => :ValorDocumento, :message => :blank})
+      end
+    
+      it "should validates presence of QuantidadeParcelas" do
+        ret = @af.apc
+        ret["ErroValidacao"].should include({:field => :QuantidadeParcelas, :message => :blank})
+      end
+
+      it "should validates presence of NumeroCartao" do
+        ret = @af.apc
+        ret["ErroValidacao"].should include({:field => :NumeroCartao, :message => :blank})
+      end
+
+      it "should validates presence of MesValidade" do
+        ret = @af.apc
+        ret["ErroValidacao"].should include({:field => :MesValidade, :message => :blank})
+      end
+    
+      it "should validates presence of AnoValidade" do
+        ret = @af.apc
+        ret["ErroValidacao"].should include({:field => :AnoValidade, :message => :blank})
+      end
+
+      it "should validates presence of CodigoSeguranca" do
+        ret = @af.apc
+        ret["ErroValidacao"].should include({:field => :CodigoSeguranca, :message => :blank})
+      end
+
+      it "should validates presence of EnderecoIPComprador" do
+        ret = @af.apc
+        ret["ErroValidacao"].should include({:field => :EnderecoIPComprador, :message => :blank})
+      end
+
+      it "should validates length of NumeroDocumento" do
+        ret = @af.apc({:NumeroDocumento => 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeef'})
+        ret["ErroValidacao"].should include({:field => :NumeroDocumento, :message => :too_long})
+      end
+
+      it "should validates length of NomePortadorCartao" do
+        ret = @af.apc({:NomePortadorCartao => 'aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeef'})
+        ret["ErroValidacao"].should include({:field => :NomePortadorCartao, :message => :too_long})
+      end
+
+      it "should validates length of NumeroCartao" do
+        ret = @af.apc({:NumeroCartao => 'aaaaaaaaaabbbbbbbbbb'})
+        ret["ErroValidacao"].should include({:field => :NumeroCartao, :message => :too_long})
+      end
+
+      it "should validates numericality of ValorDocumento" do
+        ret = @af.apc({:ValorDocumento => 'texto'})
+        ret["ErroValidacao"].should include({:field => :ValorDocumento, :message => :not_a_number})
+      end
+  
+      it "should validates numericality of QuantidadeParcelas" do
+        ret = @af.apc({:QuantidadeParcelas => 'texto'})
+        ret["ErroValidacao"].should include({:field => :QuantidadeParcelas, :message => :not_a_number})
+      end
+
+      it "should validates numericality of QuantidadeParcelas with only integer" do
+        ret = @af.apc({:QuantidadeParcelas => 1.1})
+        ret["ErroValidacao"].should include({:field => :QuantidadeParcelas, :message => :not_a_number})
+      end
+
+      it "should validates inclusion of Bandeira" do
+        ret = @af.apc({:Bandeira => 'bandeirainvalida'})
+        ret["ErroValidacao"].should include({:field => :Bandeira, :message => :inclusion})
+      end
+
+      it "should raise exception if config[:apc_url] not found" do
+        lambda {
+          @af.instance_variable_set(:@config, {:apc_url => nil})
+          @af.apc(@valid_apc_params)
+        }.should raise_exception("You should set apc_url variable in configuration file with correct APC URL")
+      end
+
+      it "should make a post request to AprovaFacil" do
+        @af.should_receive(:do_post).with("http://teste.aprovafacil.com/cgi-bin/APFW/usuario/APC", @valid_apc_params).once.and_return({})
+        @af.apc(@valid_apc_params)
+      end
+    
+      it "should return data structure of response" do
+        ret = @af.apc(@valid_apc_params)
+        ret.should == {"TransacaoAprovada"=>"False", "EnderecoAVS"=>{"Complemento"=>{}, "Endereco"=>{}, "Cep"=>{}, "Numero"=>{}}, "NumeroDocumento"=>{}, "NacionalidadeEmissor"=>{}, "ErroValidacao"=>nil, "CodigoAutorizacao"=>{}, "ComprovanteAdministradora"=>{}, "ResultadoSolicitacaoAprovacao"=>"Nao Autorizado - 32", "Transacao"=>"73397880137091", "ResultadoAVS"=>{}, "CartaoMascarado"=>"407302******0002"}
+      end
+      
     end
     
   end
