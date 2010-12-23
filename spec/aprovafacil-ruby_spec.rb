@@ -320,6 +320,16 @@ describe "AprovafacilRuby" do
     
   end
   
+  describe "last_response" do
+    
+    it "should not be writable" do
+      lambda {
+        @af.last_response = "Error Message"
+      }.should raise_exception
+    end
+    
+  end
+  
   
   describe "End User methods" do
 
@@ -345,7 +355,7 @@ describe "AprovafacilRuby" do
 
     end
 
-    describe "approve" do    
+    describe "approve" do
     
       it "should call APC once" do
         @af.should_receive(:apc).with(@valid_params).once.and_return(@approved_apc_response)
@@ -357,40 +367,56 @@ describe "AprovafacilRuby" do
         @af.approve(@valid_params)
         @af.instance_variable_get(:@apc_response).should == @approved_apc_response
       end
-    
-      it "should store transaction if approved" do
+      
+      it "should store last response" do
         @af.should_receive(:apc).with(@valid_params).and_return(@approved_apc_response)
         @af.approve(@valid_params)
-        @af.transaction.should == @approved_apc_response["Transacao"]
-      end
-
-      it "should store transaction if disapproved" do
-        @af.should_receive(:apc).with(@valid_params).and_return(@disapproved_apc_response)
-        @af.approve(@valid_params)
-        @af.transaction.should == @disapproved_apc_response["Transacao"]
+        @af.last_response.should == @approved_apc_response
       end
       
-      it "should clear error message if approved" do
-        @af.instance_variable_set(:@error_message, "Error Message")
-        @af.should_receive(:apc).once.and_return(@approved_apc_response)
-        @af.approve(@valid_params)
-        @af.error_message.should be_nil
+      context "when transaction was approved" do
+        
+        before(:each) do
+          @af.stub!(:apc).with(@valid_params).and_return(@approved_apc_response)
+        end
+    
+        it "should store transaction" do
+          @af.approve(@valid_params)
+          @af.transaction.should == @approved_apc_response["Transacao"]
+        end
+      
+        it "should clear error message" do
+          @af.instance_variable_set(:@error_message, "Error Message")
+          @af.approve(@valid_params)
+          @af.error_message.should be_nil
+        end
+      
+        it "should return true" do
+          @af.approve(@valid_params).should be_true
+        end
+      
       end
+
+      context "when transaction was not approved" do
+        
+        before(:each) do
+          @af.stub!(:apc).with(@valid_params).and_return(@disapproved_apc_response)
+        end
+
+        it "should store transaction" do
+          @af.approve(@valid_params)
+          @af.transaction.should == @disapproved_apc_response["Transacao"]
+        end
     
-      it "should store error messages from response if not approved" do
-        @af.should_receive(:apc).with(@valid_params).and_return(@disapproved_apc_response)
-        @af.approve(@valid_params)
-        @af.error_message.should == @disapproved_apc_response["ResultadoSolicitacaoAprovacao"]
-      end
+        it "should store error messages from response" do
+          @af.approve(@valid_params)
+          @af.error_message.should == @disapproved_apc_response["ResultadoSolicitacaoAprovacao"]
+        end
     
-      it "should return true if transaction was approved" do
-        @af.should_receive(:apc).with(@valid_params).and_return(@approved_apc_response)
-        @af.approve(@valid_params).should be_true
-      end      
-    
-      it "should return false if transaction was not approved" do
-        @af.should_receive(:apc).with(@valid_params).and_return(@disapproved_apc_response)
-        @af.approve(@valid_params).should be_false
+        it "should return false" do
+          @af.approve(@valid_params).should be_false
+        end
+        
       end
     
     end
@@ -433,6 +459,13 @@ describe "AprovafacilRuby" do
         @af.should_receive(:cap).once.and_return(@success_cap_response)
         @af.confirm(@valid_params)
         @af.instance_variable_get(:@cap_response).should == @success_cap_response
+      end
+      
+      it "should store response from CAP" do
+        @af.approve(@valid_params)
+        @af.should_receive(:cap).once.and_return(@success_cap_response)
+        @af.confirm(@valid_params)
+        @af.last_response.should == @success_cap_response
       end
       
       it "should clear error message if confirmed" do
@@ -498,6 +531,12 @@ describe "AprovafacilRuby" do
         @af.should_receive(:can).once.and_return(@cancelled_can_response)
         @af.cancel(@valid_params)
         @af.instance_variable_get(:@can_response).should == @cancelled_can_response
+      end
+      
+      it "should store response from CAP" do
+        @af.should_receive(:can).once.and_return(@cancelled_can_response)
+        @af.cancel(@valid_params)
+        @af.last_response.should == @cancelled_can_response
       end
       
       it "should clear error message if cancelled" do

@@ -7,7 +7,7 @@ require 'hash_strip_values'
 
 class AprovaFacil
   
-  attr_reader :transaction, :error_message
+  attr_reader :transaction, :error_message, :last_response
 
 	def initialize(config_file, environment = 'test')
 	  raise(ArgumentError, "config_file must be a valid file path") if config_file.nil? or config_file.empty?
@@ -74,6 +74,7 @@ class AprovaFacil
 
   def approve(params)
     @apc_response = apc(params)
+    @last_response = @apc_response
     @transaction = @apc_response["Transacao"]
     @error_message = approved? ? nil : @apc_response["ResultadoSolicitacaoAprovacao"]
     return approved?
@@ -81,12 +82,14 @@ class AprovaFacil
   
   def confirm(params)
     @cap_response = cap(params)
+    @last_response = @cap_response
     @error_message = confirmed? ? nil : @cap_response["ResultadoSolicitacaoConfirmacao"]
     return confirmed?
   end
   
   def cancel(params)
     @can_response = can(params)
+    @last_response = @can_response
     @error_message = (cancelled? or to_cancel?) ? nil : @can_response["ResultadoSolicitacaoCancelamento"]
     return(cancelled? or to_cancel?)
   end
