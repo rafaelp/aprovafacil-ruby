@@ -1,7 +1,3 @@
-require 'net/http'
-require 'uri'
-require 'YAML'
-require 'rubygems'
 require 'xmlsimple'
 require 'hash_strip_values'
 
