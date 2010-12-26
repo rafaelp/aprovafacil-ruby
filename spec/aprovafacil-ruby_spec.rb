@@ -539,54 +539,63 @@ describe "AprovafacilRuby" do
   
     describe "confirm" do
       
-      before(:each) do
-        @af.stub!(:apc).and_return(@approved_apc_response)
-      end
+      context "in webservice mode" do
+      
+        before(:each) do
+          @af.stub!(:apc).and_return(@approved_apc_response)
+        end
     
-      it "should call CAP once" do
-        @af.approve(@valid_params)
-        @af.should_receive(:cap).with({"Transacao" => "7777"}).once.and_return(@success_cap_response)
-        @af.confirm({"Transacao" => "7777"})
-      end
+        it "should call CAP once" do
+          @af.approve(@valid_params)
+          @af.should_receive(:cap).with({"Transacao" => "7777"}).once.and_return(@success_cap_response)
+          @af.confirm({"Transacao" => "7777"})
+        end
+        
+        context "when transaction was confirmed" do
+          
+          before(:each) do
+            @af.stub!(:cap).once.and_return(@success_cap_response)
+          end
 
-      it "should store response from CAP" do
-        @af.approve(@valid_params)
-        @af.should_receive(:cap).once.and_return(@success_cap_response)
-        @af.confirm(@valid_params)
-        @af.instance_variable_get(:@cap_response).should == @success_cap_response
-      end
+          it "should store response from CAP" do
+            @af.confirm(@valid_params)
+            @af.instance_variable_get(:@cap_response).should == @success_cap_response
+          end
       
-      it "should store response from CAP" do
-        @af.approve(@valid_params)
-        @af.should_receive(:cap).once.and_return(@success_cap_response)
-        @af.confirm(@valid_params)
-        @af.last_response.should == @success_cap_response
-      end
+          it "should store last response from CAP" do
+            @af.confirm(@valid_params)
+            @af.last_response.should == @success_cap_response
+          end
       
-      it "should clear error message if confirmed" do
-        @af.instance_variable_set(:@error_message, "Error Message")
-        @af.should_receive(:cap).once.and_return(@success_cap_response)
-        @af.confirm(@valid_params)
-        @af.error_message.should be_nil
-      end
-      
-      it "should store error messages from response if not confirmed" do
-        @af.approve(@valid_params)
-        @af.should_receive(:cap).once.and_return(@error_cap_response)
-        @af.confirm(@valid_params)
-        @af.error_message.should == @error_cap_response["ResultadoSolicitacaoConfirmacao"]
-      end
-      
-      it "should return true if transaction was confirmed" do
-        @af.approve(@valid_params)
-        @af.should_receive(:cap).once.and_return(@success_cap_response)
-        @af.confirm(@valid_params).should be_true
-      end
-      
-      it "should return false if transaction was not confirmed" do
-        @af.approve(@valid_params)
-        @af.should_receive(:cap).once.and_return(@error_cap_response)
-        @af.confirm(@valid_params).should be_false
+          it "should clear error message" do
+            @af.instance_variable_set(:@error_message, "Error Message")
+            @af.confirm(@valid_params)
+            @af.error_message.should be_nil
+          end
+            
+          it "should return true" do
+            @af.confirm(@valid_params).should be_true
+          end
+                
+        end
+        
+        context "when transaction was not confirmed" do
+          
+          before(:each) do
+            @af.stub!(:cap).once.and_return(@error_cap_response)
+          end
+          
+          it "should return false" do
+            @af.confirm(@valid_params).should be_false
+          end
+          
+          it "should store error messages from response" do
+            @af.confirm(@valid_params)
+            @af.error_message.should == @error_cap_response["ResultadoSolicitacaoConfirmacao"]
+          end
+          
+        end
+        
       end
     
     end
@@ -621,52 +630,69 @@ describe "AprovafacilRuby" do
         @af.should_receive(:can).with({"Transacao" => "7777"}).once.and_return(@cancelled_can_response)
         @af.cancel({"Transacao" => "7777"})
       end
+      
+      describe "when transaction was cancelled" do
+        
+        before(:each) do
+          @af.stub!(:can).once.and_return(@cancelled_can_response)
+        end
 
-      it "should store response from CAP" do
-        @af.should_receive(:can).once.and_return(@cancelled_can_response)
-        @af.cancel(@valid_params)
-        @af.instance_variable_get(:@can_response).should == @cancelled_can_response
-      end
+        it "should store response from CAP" do
+          @af.cancel(@valid_params)
+          @af.instance_variable_get(:@can_response).should == @cancelled_can_response
+        end
       
-      it "should store response from CAP" do
-        @af.should_receive(:can).once.and_return(@cancelled_can_response)
-        @af.cancel(@valid_params)
-        @af.last_response.should == @cancelled_can_response
-      end
+        it "should store last response from CAP" do
+          @af.cancel(@valid_params)
+          @af.last_response.should == @cancelled_can_response
+        end
       
-      it "should clear error message if cancelled" do
-        @af.instance_variable_set(:@error_message, "Error Message")
-        @af.should_receive(:can).once.and_return(@cancelled_can_response)
-        @af.cancel(@valid_params)
-        @af.error_message.should be_nil
-      end
+        it "should clear error message if cancelled" do
+          @af.instance_variable_set(:@error_message, "Error Message")
+          @af.cancel(@valid_params)
+          @af.error_message.should be_nil
+        end
+      
+        it "should return true if transaction was cancelled" do
+          @af.cancel(@valid_params).should be_true
+        end
 
-      it "should clear error message if marked to cancel" do
-        @af.instance_variable_set(:@error_message, "Error Message")
-        @af.should_receive(:can).once.and_return(@to_cancel_can_response)
-        @af.cancel(@valid_params)
-        @af.error_message.should be_nil
       end
       
-      it "should store error message from response if not cancelled" do
-        @af.should_receive(:can).once.and_return(@error_can_response)
-        @af.cancel(@valid_params)
-        @af.error_message.should == @error_can_response["ResultadoSolicitacaoCancelamento"]
-      end
-      
-      it "should return true if transaction was cancelled" do
-        @af.should_receive(:can).once.and_return(@cancelled_can_response)
-        @af.cancel(@valid_params).should be_true
-      end
+      context "when transaction was marked to cancel" do
+        
+        before(:each) do
+          @af.stub!(:can).once.and_return(@to_cancel_can_response)
+        end
 
-      it "should return true if transaction was marked to cancel" do
-        @af.should_receive(:can).once.and_return(@to_cancel_can_response)
-        @af.cancel(@valid_params).should be_true
+        it "should clear error message" do
+          @af.instance_variable_set(:@error_message, "Error Message")
+          @af.cancel(@valid_params)
+          @af.error_message.should be_nil
+        end
+
+        it "should return true" do
+          @af.cancel(@valid_params).should be_true
+        end      
+        
       end
       
-      it "should return false if transaction was not cancelled" do
-        @af.should_receive(:can).once.and_return(@error_can_response)
-        @af.cancel(@valid_params).should be_false
+      context "when transaction was not cancelled" do
+        
+        before(:each) do
+          @af.stub!(:can).once.and_return(@error_can_response)
+        end
+        
+        it "should return false" do
+          @af.cancel(@valid_params).should be_false
+        end
+        
+        it "should store error message from response" do
+          @af.cancel(@valid_params)
+          @af.error_message.should == @error_can_response["ResultadoSolicitacaoCancelamento"]
+        end
+        
+        
       end
     
     end
