@@ -441,8 +441,11 @@ describe "AprovafacilRuby" do
       @approved_apc_response = {"TransacaoAprovada" => "True", "Transacao" => "9999", "ResultadoSolicitacaoAprovacao" => "00 ­ APROVADA"}
       @disapproved_apc_response = {"TransacaoAprovada" => "False", "Transacao" => "8888", "ResultadoSolicitacaoAprovacao" => "Nao Autorizado - 32"}
 
-      @success_cap_response = {"ResultadoSolicitacaoConfirmacao" => "Confirmado%2073263500055432"}
-      @error_cap_response = {"ResultadoSolicitacaoConfirmacao" => "Erro%20­%20Transa%E7%E3o%20a%20confirmar%20n%E3o%20encontrada%20ou %20jE1%20confirmada"}
+      @success_cap_response_webservice = {"ResultadoSolicitacaoConfirmacao" => "Confirmado%2073263500055432"}
+      @error_cap_response_webservice = {"ResultadoSolicitacaoConfirmacao" => "Erro%20­%20Transa%E7%E3o%20a%20confirmar%20n%E3o%20encontrada%20ou %20jE1%20confirmada"}
+
+      @success_cap_response_cgi = {"ComprovanteAdministradora"=>{}, "ResultadoSolicitacaoAprovacao" => "Confirmado%2073263500055432"}
+      @error_cap_response_cgi = {"ComprovanteAdministradora"=>{}, "ResultadoSolicitacaoAprovacao" => "Erro%20­%20Transa%E7%E3o%20a%20confirmar%20n%E3o%20encontrada%20ou %20jE1%20confirmada"}
 
       @cancelled_can_response = {"ResultadoSolicitacaoCancelamento" => "Cancelado%2073263500055432"}
       @to_cancel_can_response = {"ResultadoSolicitacaoCancelamento" => "Cancelamento%20marcado%20para%20envio%2073263500055432 "}
@@ -547,24 +550,24 @@ describe "AprovafacilRuby" do
     
         it "should call CAP once" do
           @af.approve(@valid_params)
-          @af.should_receive(:cap).with({"Transacao" => "7777"}).once.and_return(@success_cap_response)
+          @af.should_receive(:cap).with({"Transacao" => "7777"}).once.and_return(@success_cap_response_webservice)
           @af.confirm({"Transacao" => "7777"})
         end
         
         context "when transaction was confirmed" do
           
           before(:each) do
-            @af.stub!(:cap).once.and_return(@success_cap_response)
+            @af.stub!(:cap).once.and_return(@success_cap_response_webservice)
           end
 
           it "should store response from CAP" do
             @af.confirm(@valid_params)
-            @af.instance_variable_get(:@cap_response).should == @success_cap_response
+            @af.instance_variable_get(:@cap_response).should == @success_cap_response_webservice
           end
       
           it "should store last response from CAP" do
             @af.confirm(@valid_params)
-            @af.last_response.should == @success_cap_response
+            @af.last_response.should == @success_cap_response_webservice
           end
       
           it "should clear error message" do
@@ -582,7 +585,7 @@ describe "AprovafacilRuby" do
         context "when transaction was not confirmed" do
           
           before(:each) do
-            @af.stub!(:cap).once.and_return(@error_cap_response)
+            @af.stub!(:cap).once.and_return(@error_cap_response_webservice)
           end
           
           it "should return false" do
@@ -591,7 +594,68 @@ describe "AprovafacilRuby" do
           
           it "should store error messages from response" do
             @af.confirm(@valid_params)
-            @af.error_message.should == @error_cap_response["ResultadoSolicitacaoConfirmacao"]
+            @af.error_message.should == "Erro%20­%20Transa%E7%E3o%20a%20confirmar%20n%E3o%20encontrada%20ou %20jE1%20confirmada"
+          end
+          
+        end
+        
+      end
+      
+      context "in cgi mode" do
+      
+        before(:each) do
+          @af.stub!(:apc).and_return(@approved_apc_response)
+          config = @af.config
+          @af.stub!(:config).and_return(config.merge(:mode => 'cgi'))
+        end
+    
+        it "should call CAP once" do
+          @af.approve(@valid_params)
+          @af.should_receive(:cap).with({"Transacao" => "7777"}).once.and_return(@success_cap_response_cgi)
+          @af.confirm({"Transacao" => "7777"})
+        end
+        
+        context "when transaction was confirmed" do
+          
+          before(:each) do
+            @af.stub!(:cap).once.and_return(@success_cap_response_cgi)
+          end
+
+          it "should store response from CAP" do
+            @af.confirm(@valid_params)
+            @af.instance_variable_get(:@cap_response).should == @success_cap_response_cgi
+          end
+      
+          it "should store last response from CAP" do
+            @af.confirm(@valid_params)
+            @af.last_response.should == @success_cap_response_cgi
+          end
+      
+          it "should clear error message" do
+            @af.instance_variable_set(:@error_message, "Error Message")
+            @af.confirm(@valid_params)
+            @af.error_message.should be_nil
+          end
+            
+          it "should return true" do
+            @af.confirm(@valid_params).should be_true
+          end
+                
+        end
+        
+        context "when transaction was not confirmed" do
+          
+          before(:each) do
+            @af.stub!(:cap).once.and_return(@error_cap_response_cgi)
+          end
+          
+          it "should return false" do
+            @af.confirm(@valid_params).should be_false
+          end
+          
+          it "should store error messages from response" do
+            @af.confirm(@valid_params)
+            @af.error_message.should == "Erro%20­%20Transa%E7%E3o%20a%20confirmar%20n%E3o%20encontrada%20ou %20jE1%20confirmada"
           end
           
         end
@@ -608,14 +672,37 @@ describe "AprovafacilRuby" do
         }.should raise_exception("Call this method after confirm")
       end
       
-      it "should return true if last CAP request was confirmed" do
-        @af.instance_variable_set(:@cap_response, @success_cap_response)
-        @af.confirmed?.should be_true
+      context "in webservice mode" do
+      
+        it "should return true if last CAP request was confirmed" do
+          @af.instance_variable_set(:@cap_response, @success_cap_response_webservice)
+          @af.confirmed?.should be_true
+        end
+      
+        it "should return false if last CAP request was not confirmed" do
+          @af.instance_variable_set(:@cap_response, @error_cap_response_webservice)
+          @af.confirmed?.should be_false
+        end
+        
       end
       
-      it "should return false if last CAP request was not confirmed" do
-        @af.instance_variable_set(:@cap_response, @error_cap_response)
-        @af.confirmed?.should be_false
+      context "in cgi mode" do
+        
+        before(:each) do
+          config = @af.config
+          @af.stub!(:config).and_return(config.merge(:mode => 'cgi'))
+        end
+      
+        it "should return true if last CAP request was confirmed" do
+          @af.instance_variable_set(:@cap_response, @success_cap_response_cgi)
+          @af.confirmed?.should be_true
+        end
+      
+        it "should return false if last CAP request was not confirmed" do
+          @af.instance_variable_set(:@cap_response, @error_cap_response_cgi)
+          @af.confirmed?.should be_false
+        end
+        
       end
     
     end
@@ -623,75 +710,94 @@ describe "AprovafacilRuby" do
     describe "cancel" do
 
       before(:each) do
-        @af.stub!(:cap).and_return(@success_cap_response)
-      end
-
-      it "should call CAN once" do
-        @af.should_receive(:can).with({"Transacao" => "7777"}).once.and_return(@cancelled_can_response)
-        @af.cancel({"Transacao" => "7777"})
+        @af.stub!(:cap).and_return(@success_cap_response_cgi)
       end
       
-      describe "when transaction was cancelled" do
+      context "in webservice mode" do
+
+        it "should call CAN once" do
+          @af.should_receive(:can).with({"Transacao" => "7777"}).once.and_return(@cancelled_can_response)
+          @af.cancel({"Transacao" => "7777"})
+        end
+    
+        describe "when transaction was cancelled" do
+      
+          before(:each) do
+            @af.stub!(:can).once.and_return(@cancelled_can_response)
+          end
+
+          it "should store response from CAP" do
+            @af.cancel(@valid_params)
+            @af.instance_variable_get(:@can_response).should == @cancelled_can_response
+          end
+    
+          it "should store last response from CAP" do
+            @af.cancel(@valid_params)
+            @af.last_response.should == @cancelled_can_response
+          end
+    
+          it "should clear error message if cancelled" do
+            @af.instance_variable_set(:@error_message, "Error Message")
+            @af.cancel(@valid_params)
+            @af.error_message.should be_nil
+          end
+    
+          it "should return true if transaction was cancelled" do
+            @af.cancel(@valid_params).should be_true
+          end
+
+        end
+    
+        context "when transaction was marked to cancel" do
+      
+          before(:each) do
+            @af.stub!(:can).once.and_return(@to_cancel_can_response)
+          end
+
+          it "should clear error message" do
+            @af.instance_variable_set(:@error_message, "Error Message")
+            @af.cancel(@valid_params)
+            @af.error_message.should be_nil
+          end
+
+          it "should return true" do
+            @af.cancel(@valid_params).should be_true
+          end      
+      
+        end
+    
+        context "when transaction was not cancelled" do
+      
+          before(:each) do
+            @af.stub!(:can).once.and_return(@error_can_response)
+          end
+      
+          it "should return false" do
+            @af.cancel(@valid_params).should be_false
+          end
+      
+          it "should store error message from response" do
+            @af.cancel(@valid_params)
+            @af.error_message.should == @error_can_response["ResultadoSolicitacaoCancelamento"]
+          end
+      
+      
+        end
+        
+      end
+      
+      context "in cgi mode" do
         
         before(:each) do
-          @af.stub!(:can).once.and_return(@cancelled_can_response)
+          config = @af.config
+          @af.stub!(:config).and_return(config.merge(:mode => 'cgi'))
         end
 
-        it "should store response from CAP" do
-          @af.cancel(@valid_params)
-          @af.instance_variable_get(:@can_response).should == @cancelled_can_response
+        it "should raise exception" do
+          lambda {
+            @af.cancel(@valid_params)
+          }.should raise_exception("Method not available in cgi mode")
         end
-      
-        it "should store last response from CAP" do
-          @af.cancel(@valid_params)
-          @af.last_response.should == @cancelled_can_response
-        end
-      
-        it "should clear error message if cancelled" do
-          @af.instance_variable_set(:@error_message, "Error Message")
-          @af.cancel(@valid_params)
-          @af.error_message.should be_nil
-        end
-      
-        it "should return true if transaction was cancelled" do
-          @af.cancel(@valid_params).should be_true
-        end
-
-      end
-      
-      context "when transaction was marked to cancel" do
-        
-        before(:each) do
-          @af.stub!(:can).once.and_return(@to_cancel_can_response)
-        end
-
-        it "should clear error message" do
-          @af.instance_variable_set(:@error_message, "Error Message")
-          @af.cancel(@valid_params)
-          @af.error_message.should be_nil
-        end
-
-        it "should return true" do
-          @af.cancel(@valid_params).should be_true
-        end      
-        
-      end
-      
-      context "when transaction was not cancelled" do
-        
-        before(:each) do
-          @af.stub!(:can).once.and_return(@error_can_response)
-        end
-        
-        it "should return false" do
-          @af.cancel(@valid_params).should be_false
-        end
-        
-        it "should store error message from response" do
-          @af.cancel(@valid_params)
-          @af.error_message.should == @error_can_response["ResultadoSolicitacaoCancelamento"]
-        end
-        
         
       end
     

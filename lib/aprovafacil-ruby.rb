@@ -82,11 +82,13 @@ class AprovaFacil
   def confirm(params)
     @cap_response = cap(params)
     @last_response = @cap_response
-    @error_message = confirmed? ? nil : @cap_response["ResultadoSolicitacaoConfirmacao"]
+    @error_message = confirmed? ? nil : (cgi_mode? ? @cap_response["ResultadoSolicitacaoAprovacao"] : @cap_response["ResultadoSolicitacaoConfirmacao"])
     return confirmed?
   end
   
   def cancel(params)
+    raise "Method not available in cgi mode" if cgi_mode?
+    
     @can_response = can(params)
     @last_response = @can_response
     @error_message = (cancelled? or to_cancel?) ? nil : @can_response["ResultadoSolicitacaoCancelamento"]
@@ -100,20 +102,21 @@ class AprovaFacil
 
   def confirmed?
     raise "Call this method after confirm" if @cap_response.nil?
-    @cap_response["ResultadoSolicitacaoConfirmacao"].split("%20")[0] == "Confirmado"
+    
+    result = (cgi_mode? ? @cap_response["ResultadoSolicitacaoAprovacao"] : @cap_response["ResultadoSolicitacaoConfirmacao"])
+    result =~ /Confirmado/
   end
 
   def cancelled?
     raise "Call this method after cancel" if @can_response.nil?
-    @can_response["ResultadoSolicitacaoCancelamento"].split("%20")[0] == "Cancelado"
+    result = @can_response["ResultadoSolicitacaoCancelamento"]
+    result =~ /Cancelado/
   end
 
   def to_cancel?
     raise "Call this method after cancel" if @can_response.nil?
-    (@can_response["ResultadoSolicitacaoCancelamento"].split("%20")[0] == "Cancelamento" and
-    @can_response["ResultadoSolicitacaoCancelamento"].split("%20")[1] == "marcado" and
-    @can_response["ResultadoSolicitacaoCancelamento"].split("%20")[2] == "para" and
-    @can_response["ResultadoSolicitacaoCancelamento"].split("%20")[3] == "envio")
+    result = @can_response["ResultadoSolicitacaoCancelamento"]
+    result.gsub('%20', ' ') =~ /Cancelamento marcado para envio/
   end
   
   def error?
@@ -122,71 +125,74 @@ class AprovaFacil
       
 	protected
 
-
-  def parse_config
-    YAML::load(File.open(@config_file))
-  end
-
-  def validates_presence_of(field)
-    value = @params[field.to_sym]
-    if value.nil?
-      @errors << {
-        :field => field,
-        :message => :blank,
-      }
+    def cgi_mode?
+      config[:mode] == 'cgi'
     end
-  end
 
-  def validates_length_of(field, range_options)
-    value = @params[field.to_sym]
-    return if value.nil?
+    def parse_config
+      YAML::load(File.open(@config_file))
+    end
 
-    validity_checks = { :is => "==", :minimum => ">=", :maximum => "<=" }
-    option = range_options.keys.first
-    option_value = range_options[option]
+    def validates_presence_of(field)
+      value = @params[field.to_sym]
+      if value.nil?
+        @errors << {
+          :field => field,
+          :message => :blank,
+        }
+      end
+    end
+
+    def validates_length_of(field, range_options)
+      value = @params[field.to_sym]
+      return if value.nil?
+
+      validity_checks = { :is => "==", :minimum => ">=", :maximum => "<=" }
+      option = range_options.keys.first
+      option_value = range_options[option]
     
-    unless !value.nil? and value.size.method(validity_checks[option])[option_value]
-      @errors << {
-        :field => field,
-        :message => {:is => :wrong_length, :minimum => :too_short, :maximum => :too_long}[option],
-      }
+      unless !value.nil? and value.size.method(validity_checks[option])[option_value]
+        @errors << {
+          :field => field,
+          :message => {:is => :wrong_length, :minimum => :too_short, :maximum => :too_long}[option],
+        }
+      end
     end
-  end
   
-  def validates_numericality_of(field, configuration = {})
-    value = @params[field.to_sym]
-    return if value.nil?
+    def validates_numericality_of(field, configuration = {})
+      value = @params[field.to_sym]
+      return if value.nil?
 
-    if configuration[:only_integer]
-      unless value.to_s =~ /\A[+-]?\d+\Z/
-        @errors << {
-          :field => field,
-          :message => :not_a_number,
-        }
-      end
-    else
-      begin
-        value = Kernel.Float(value)
-      rescue ArgumentError, TypeError
-        @errors << {
-          :field => field,
-          :message => :not_a_number,
-        }
+      if configuration[:only_integer]
+        unless value.to_s =~ /\A[+-]?\d+\Z/
+          @errors << {
+            :field => field,
+            :message => :not_a_number,
+          }
+        end
+      else
+        begin
+          value = Kernel.Float(value)
+        rescue ArgumentError, TypeError
+          @errors << {
+            :field => field,
+            :message => :not_a_number,
+          }
+        end
       end
     end
-  end
 
-  def validates_inclusion_of(field, configuration)
-    value = @params[field.to_sym]
-    return if value.nil?
+    def validates_inclusion_of(field, configuration)
+      value = @params[field.to_sym]
+      return if value.nil?
     
-    enum = configuration[:in] || configuration[:within]
-    unless enum.include?(value)
-      @errors << {
-        :field => field,
-        :message => :inclusion,
-      }
+      enum = configuration[:in] || configuration[:within]
+      unless enum.include?(value)
+        @errors << {
+          :field => field,
+          :message => :inclusion,
+        }
+      end
     end
-  end
 
 end
