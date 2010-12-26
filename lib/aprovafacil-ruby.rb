@@ -122,12 +122,12 @@ class AprovaFacil
   def error?
     !@error_message.nil?
   end
+
+  def cgi_mode?
+    config['mode'] == 'cgi'
+  end
       
 	protected
-
-    def cgi_mode?
-      config[:mode] == 'cgi'
-    end
 
     def parse_config
       YAML::load(File.open(@config_file))

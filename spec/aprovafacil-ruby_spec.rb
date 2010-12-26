@@ -4,6 +4,7 @@ describe "AprovafacilRuby" do
 
   before(:all) do
     @config_file = File.expand_path(File.dirname(__FILE__) + '/fixtures/config.yml')
+    @config_file_cgi = File.expand_path(File.dirname(__FILE__) + '/fixtures/config-cgi.yml')
   end
   
   before(:each) do
@@ -44,6 +45,7 @@ describe "AprovafacilRuby" do
     
     before(:all) do
       @test_config = {
+        "mode" => "webservice",
         "node1" => {
           "test" => 1
         },
@@ -52,6 +54,7 @@ describe "AprovafacilRuby" do
         }
       }
       @development_config = {
+        "mode" => "cgi",
         "node3" => {
           "test" => 3,
           "test" => 4
@@ -86,6 +89,14 @@ describe "AprovafacilRuby" do
     it "should get config from correct environment" do
       @af = AprovaFacil.new(@config_file, 'development')
       @af.config.should == @development_config
+    end
+    
+    it "should set correct mode from config" do
+      @af = AprovaFacil.new(@config_file, 'test')
+      @af.cgi_mode?.should be_false
+
+      @af = AprovaFacil.new(@config_file, 'development')
+      @af.cgi_mode?.should be_true
     end
     
   end
@@ -604,9 +615,8 @@ describe "AprovafacilRuby" do
       context "in cgi mode" do
       
         before(:each) do
+          @af = AprovaFacil.new(@config_file_cgi)
           @af.stub!(:apc).and_return(@approved_apc_response)
-          config = @af.config
-          @af.stub!(:config).and_return(config.merge(:mode => 'cgi'))
         end
     
         it "should call CAP once" do
@@ -689,8 +699,7 @@ describe "AprovafacilRuby" do
       context "in cgi mode" do
         
         before(:each) do
-          config = @af.config
-          @af.stub!(:config).and_return(config.merge(:mode => 'cgi'))
+          @af = AprovaFacil.new(@config_file_cgi)
         end
       
         it "should return true if last CAP request was confirmed" do
@@ -789,8 +798,7 @@ describe "AprovafacilRuby" do
       context "in cgi mode" do
         
         before(:each) do
-          config = @af.config
-          @af.stub!(:config).and_return(config.merge(:mode => 'cgi'))
+          @af = AprovaFacil.new(@config_file_cgi)
         end
 
         it "should raise exception" do
