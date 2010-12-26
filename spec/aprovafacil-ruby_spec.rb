@@ -449,8 +449,8 @@ describe "AprovafacilRuby" do
         :CodigoSeguranca => 999,
         :EnderecoIPComprador => '200.255.108.6',
       }
-      @approved_apc_response = {"TransacaoAprovada" => "True", "Transacao" => "9999", "ResultadoSolicitacaoAprovacao" => "00 ­ APROVADA"}
-      @disapproved_apc_response = {"TransacaoAprovada" => "False", "Transacao" => "8888", "ResultadoSolicitacaoAprovacao" => "Nao Autorizado - 32"}
+      @approved_apc_response = {"TransacaoAprovada" => "TRUE", "Transacao" => "9999", "ResultadoSolicitacaoAprovacao" => "00 ­ APROVADA"}
+      @disapproved_apc_response = {"TransacaoAprovada" => "FALSE", "Transacao" => "8888", "ResultadoSolicitacaoAprovacao" => "Nao Autorizado - 32"}
 
       @success_cap_response_webservice = {"ResultadoSolicitacaoConfirmacao" => "Confirmado%2073263500055432"}
       @error_cap_response_webservice = {"ResultadoSolicitacaoConfirmacao" => "Erro%20­%20Transa%E7%E3o%20a%20confirmar%20n%E3o%20encontrada%20ou %20jE1%20confirmada"}

@@ -97,7 +97,7 @@ class AprovaFacil
 
   def approved?
     raise "Call this method after approve" if @apc_response.nil?
-    @apc_response["TransacaoAprovada"] == "True"
+    @apc_response["TransacaoAprovada"].upcase == "TRUE"
   end
 
   def confirmed?
