@@ -26,7 +26,7 @@ class AprovaFacil
     validates_numericality_of :ValorDocumento
     validates_numericality_of :QuantidadeParcelas, :only_integer => true
 
-    unless params[:TransacaoAnterior]
+    unless params[:Transacao]
       validates_presence_of :NumeroCartao
       validates_presence_of :MesValidade
       validates_presence_of :AnoValidade
