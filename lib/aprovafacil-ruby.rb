@@ -1,3 +1,4 @@
+# -*- encoding : utf-8 -*-
 require 'xmlsimple'
 require 'hash_strip_values'
 
