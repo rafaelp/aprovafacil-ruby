@@ -1,6 +1,6 @@
 # aprovafacil-ruby
 
-Ruby Wrapper for AprovaFacil
+Ruby Wrapper for [AprovaFacil](http://www.cobrebem.com.br/aprovafacil.html)
 
 ## INSTALATION
 
@@ -16,9 +16,7 @@ aprovafacil-ruby is released under the MIT License.
 
 Working at [BielSystems](http://bielsystems.com.br)
 
-Blog: [http://rafael.adm.br](http://rafael.adm.br)
-
-Podcast: [http://rafael.adm.br/voltandopracasa](http://rafael.adm.br/voltandopracasa)
+Site: [http://rafael.adm.br](http://rafael.adm.br)
 
 Github: [http://github.com/rafaelp](http://github.com/rafaelp)
 
